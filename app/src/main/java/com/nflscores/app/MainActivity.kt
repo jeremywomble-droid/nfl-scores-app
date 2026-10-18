@@ -37,6 +37,7 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        ScoresWidgetProvider.requestUpdate(this)
         handler.removeCallbacks(refreshRunnable)
         handler.post(refreshRunnable)
     }

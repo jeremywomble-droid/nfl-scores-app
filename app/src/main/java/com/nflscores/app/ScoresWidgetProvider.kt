@@ -1,98 +1,110 @@
 package com.nflscores.app
 
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import kotlin.concurrent.thread
 
 /**
- * Semi-transparent home-screen widget: Week 7 games with the actual score
- * on top and Muse's locked prediction underneath each one.
- * Background is 62% opaque black (see res/drawable/widget_bg.xml).
+ * Semi-transparent, scrollable home-screen widget: every Week 7 game with the
+ * actual score on top and Muse's locked prediction underneath.
+ *
+ * Refresh is game-aware (the system widget timer is OFF, updatePeriodMillis=0):
+ *  - any game live        -> wake again in ~10 minutes
+ *  - a kickoff is ahead   -> wake at that kickoff
+ *  - everything final     -> check back in ~12 hours
+ * Alarms use setAndAllowWhileIdle (no exact-alarm permission needed).
  */
 class ScoresWidgetProvider : AppWidgetProvider() {
 
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        if (intent.action == ACTION_REFRESH || intent.action == Intent.ACTION_BOOT_COMPLETED) {
+            val manager = AppWidgetManager.getInstance(context)
+            val ids = manager.getAppWidgetIds(ComponentName(context, ScoresWidgetProvider::class.java))
+            if (ids.isNotEmpty()) onUpdate(context, manager, ids)
+        }
+    }
+
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
         for (id in ids) {
-            val views = RemoteViews(context.packageName, R.layout.widget_layout)
-            views.setTextViewText(R.id.widgetTitle, "🏈 NFL — WEEK 7")
-            views.setTextViewText(R.id.widgetStats, "Loading scores…")
-            attachClick(context, views)
-            manager.updateAppWidget(id, views)
+            manager.updateAppWidget(id, buildViews(context, "Loading scores…"))
         }
         val pending = goAsync()
         thread {
+            var games: List<Game> = emptyList()
+            var stats = "Could not load — tap to open the app"
             try {
-                val games = EspnApi.fetchWeek(Predictions.WEEK)
+                games = EspnApi.fetchWeek(Predictions.WEEK)
                 val preds = Predictions.load(context)
-                for (id in ids) {
-                    val views = RemoteViews(context.packageName, R.layout.widget_layout)
-                    fill(context, views, games, preds)
-                    attachClick(context, views)
-                    manager.updateAppWidget(id, views)
-                }
+                stats = Predictions.statsLine(preds, games)
             } catch (e: Exception) {
+                // keep the fallback stats text
+            }
+            try {
                 for (id in ids) {
-                    val views = RemoteViews(context.packageName, R.layout.widget_layout)
-                    views.setTextViewText(R.id.widgetStats, "Could not load — open the app to retry")
-                    attachClick(context, views)
-                    manager.updateAppWidget(id, views)
+                    manager.updateAppWidget(id, buildViews(context, stats))
+                    manager.notifyAppWidgetViewDataChanged(id, R.id.widgetList)
                 }
+                scheduleNext(context, games)
             } finally {
                 pending.finish()
             }
         }
     }
 
-    private fun attachClick(context: Context, views: RemoteViews) {
-        val intent = Intent(context, MainActivity::class.java)
-        val pi = PendingIntent.getActivity(
-            context, 0, intent,
+    private fun buildViews(context: Context, stats: String): RemoteViews {
+        val views = RemoteViews(context.packageName, R.layout.widget_layout)
+        views.setTextViewText(R.id.widgetTitle, "🏈 NFL — WEEK 7")
+        views.setTextViewText(R.id.widgetStats, stats)
+        val adapterIntent = Intent(context, WidgetGamesService::class.java)
+        views.setRemoteAdapter(R.id.widgetList, adapterIntent)
+        val openApp = Intent(context, MainActivity::class.java)
+        val template = PendingIntent.getActivity(
+            context, 0, openApp,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setOnClickPendingIntent(R.id.widgetRoot, pi)
+        views.setPendingIntentTemplate(R.id.widgetList, template)
+        views.setOnClickPendingIntent(R.id.widgetTitle, template)
+        return views
     }
 
-    private fun fill(context: Context, views: RemoteViews, games: List<Game>, preds: List<Prediction>) {
-        views.setTextViewText(R.id.widgetTitle, "🏈 NFL — WEEK 7")
-        views.setTextViewText(R.id.widgetStats, Predictions.statsLine(preds, games))
-
-        val sorted = games.sortedWith(
-            compareBy(
-                { g: Game -> when (g.state) { "in" -> 0; "pre" -> 1; else -> 2 } },
-                { g: Game -> g.dateMillis }
-            )
-        )
-        val rowIds = listOf(
-            R.id.widgetRow1, R.id.widgetRow2, R.id.widgetRow3, R.id.widgetRow4, R.id.widgetRow5
-        )
-        val shown = sorted.take(5)
-        for (i in rowIds.indices) {
-            if (i < shown.size) {
-                val g = shown[i]
-                val p = Predictions.find(preds, g)
-                val main = if (g.state == "pre") {
-                    "${g.awayAbbr} @ ${g.homeAbbr} · ${g.statusText}"
-                } else {
-                    "${g.awayAbbr} ${g.awayScore} @ ${g.homeAbbr} ${g.homeScore} · ${g.statusText}"
-                }
-                val predLine = if (p != null) {
-                    "\nPred: ${p.away} ${p.predAway} — ${p.home} ${p.predHome} · ${p.pick} ${p.confidence}%"
-                } else {
-                    ""
-                }
-                views.setTextViewText(rowIds[i], main + predLine)
-            } else {
-                views.setTextViewText(rowIds[i], "")
+    private fun scheduleNext(context: Context, games: List<Game>) {
+        val now = System.currentTimeMillis()
+        val next: Long = when {
+            games.any { it.state == "in" } -> now + 10 * 60 * 1000L
+            games.any { it.state == "pre" } -> {
+                val kickoff = games.filter { it.state == "pre" }.minOf { it.dateMillis }
+                if (kickoff > now) kickoff + 60 * 1000L else now + 10 * 60 * 1000L
             }
+            games.isNotEmpty() -> now + 12 * 60 * 60 * 1000L
+            else -> now + 60 * 60 * 1000L // fetch failed: retry in an hour
         }
-        val remaining = games.size - shown.size
-        views.setTextViewText(
-            R.id.widgetMore,
-            if (remaining > 0) "+$remaining more games — tap to open the app" else "Tap to open the app"
+        val intent = Intent(context, ScoresWidgetProvider::class.java).apply {
+            action = ACTION_REFRESH
+        }
+        val pi = PendingIntent.getBroadcast(
+            context, 1, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val alarm = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next, pi)
+    }
+
+    companion object {
+        const val ACTION_REFRESH = "com.nflscores.app.ACTION_WIDGET_REFRESH"
+
+        /** Ask any placed widgets to refresh now (used when the app is opened). */
+        fun requestUpdate(context: Context) {
+            val intent = Intent(context, ScoresWidgetProvider::class.java).apply {
+                action = ACTION_REFRESH
+            }
+            context.sendBroadcast(intent)
+        }
     }
 }
