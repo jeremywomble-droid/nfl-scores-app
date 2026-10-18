@@ -1,0 +1,130 @@
+{
+ "predictions": [
+  {
+   "week": 7,
+   "away": "NE",
+   "home": "CHI",
+   "predAway": 21,
+   "predHome": 23,
+   "pick": "CHI",
+   "confidence": 59
+  },
+  {
+   "week": 7,
+   "away": "PIT",
+   "home": "NO",
+   "predAway": 26,
+   "predHome": 24,
+   "pick": "PIT",
+   "confidence": 59
+  },
+  {
+   "week": 7,
+   "away": "SF",
+   "home": "ATL",
+   "predAway": 28,
+   "predHome": 23,
+   "pick": "SF",
+   "confidence": 71
+  },
+  {
+   "week": 7,
+   "away": "CLE",
+   "home": "TEN",
+   "predAway": 20,
+   "predHome": 19,
+   "pick": "CLE",
+   "confidence": 55
+  },
+  {
+   "week": 7,
+   "away": "IND",
+   "home": "MIN",
+   "predAway": 19,
+   "predHome": 26,
+   "pick": "MIN",
+   "confidence": 78
+  },
+  {
+   "week": 7,
+   "away": "MIA",
+   "home": "NYJ",
+   "predAway": 17,
+   "predHome": 24,
+   "pick": "NYJ",
+   "confidence": 78
+  },
+  {
+   "week": 7,
+   "away": "TB",
+   "home": "CAR",
+   "predAway": 24,
+   "predHome": 28,
+   "pick": "CAR",
+   "confidence": 67
+  },
+  {
+   "week": 7,
+   "away": "CIN",
+   "home": "BAL",
+   "predAway": 25,
+   "predHome": 27,
+   "pick": "BAL",
+   "confidence": 59
+  },
+  {
+   "week": 7,
+   "away": "NYG",
+   "home": "HOU",
+   "predAway": 22,
+   "predHome": 23,
+   "pick": "HOU",
+   "confidence": 55
+  },
+  {
+   "week": 7,
+   "away": "DEN",
+   "home": "ARI",
+   "predAway": 26,
+   "predHome": 23,
+   "pick": "DEN",
+   "confidence": 63
+  },
+  {
+   "week": 7,
+   "away": "GB",
+   "home": "DET",
+   "predAway": 25,
+   "predHome": 29,
+   "pick": "DET",
+   "confidence": 67
+  },
+  {
+   "week": 7,
+   "away": "LAR",
+   "home": "LV",
+   "predAway": 25,
+   "predHome": 27,
+   "pick": "LV",
+   "confidence": 59
+  },
+  {
+   "week": 7,
+   "away": "KC",
+   "home": "SEA",
+   "predAway": 25,
+   "predHome": 26,
+   "pick": "SEA",
+   "confidence": 55
+  },
+  {
+   "week": 7,
+   "away": "DAL",
+   "home": "PHI",
+   "predAway": 25,
+   "predHome": 24,
+   "pick": "DAL",
+   "confidence": 55
+  }
+ ]
+}
