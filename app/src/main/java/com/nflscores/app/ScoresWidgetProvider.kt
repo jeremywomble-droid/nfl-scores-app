@@ -15,10 +15,12 @@ import kotlin.concurrent.thread
  * actual score on top and Muse's locked prediction underneath.
  *
  * Refresh is game-aware (the system widget timer is OFF, updatePeriodMillis=0):
- *  - any game live        -> wake again in ~10 minutes
+ *  - any game live        -> wake again in ~5 minutes
  *  - a kickoff is ahead   -> wake at that kickoff
  *  - everything final     -> check back in ~12 hours
- * Alarms use setAndAllowWhileIdle (no exact-alarm permission needed).
+ * Alarms use setAndAllowWhileIdle (no exact-alarm permission needed). Android
+ * may stretch background wake-ups while the phone is idle/dozing; while the
+ * screen is in use the refreshes land on schedule.
  */
 class ScoresWidgetProvider : AppWidgetProvider() {
 
@@ -77,10 +79,10 @@ class ScoresWidgetProvider : AppWidgetProvider() {
     private fun scheduleNext(context: Context, games: List<Game>) {
         val now = System.currentTimeMillis()
         val next: Long = when {
-            games.any { it.state == "in" } -> now + 10 * 60 * 1000L
+            games.any { it.state == "in" } -> now + 5 * 60 * 1000L
             games.any { it.state == "pre" } -> {
                 val kickoff = games.filter { it.state == "pre" }.minOf { it.dateMillis }
-                if (kickoff > now) kickoff + 60 * 1000L else now + 10 * 60 * 1000L
+                if (kickoff > now) kickoff + 60 * 1000L else now + 5 * 60 * 1000L
             }
             games.isNotEmpty() -> now + 12 * 60 * 60 * 1000L
             else -> now + 60 * 60 * 1000L // fetch failed: retry in an hour
