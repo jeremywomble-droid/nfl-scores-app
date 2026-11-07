@@ -11,10 +11,11 @@ import android.widget.RemoteViews
 import kotlin.concurrent.thread
 
 /**
- * Semi-transparent, scrollable home-screen widget: every game of the synced
+ * Semi-transparent, scrollable home-screen widget: every game of the current
  * predictions week with the actual score on top and Muse's locked prediction
  * underneath. The picks (and their week) come from the nfl-scores web app,
- * synced into assets/predictions.json by scripts/sync_predictions.py.
+ * fetched at runtime by [Predictions] from the repo's data/predictions.json
+ * feed (assets/predictions.json is only the offline fallback snapshot).
  *
  * Refresh is game-aware (the system widget timer is OFF, updatePeriodMillis=0):
  *  - any game live        -> wake again in ~5 minutes

@@ -86,7 +86,7 @@ class MainActivity : Activity() {
             "Updated ${timeFmt.format(Date())} · auto-refreshes every minute"
         }
 
-        // ---- Predictions section (week comes from the synced web-app picks) ----
+        // ---- Predictions section (week comes from the web-app picks feed) ----
         val predWeek = Predictions.week
         container.addView(sectionTitle("🔮 CLAUDE'S WEEK $predWeek PREDICTIONS — LOCKED"))
         if (predGames.isEmpty()) {

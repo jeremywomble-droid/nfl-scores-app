@@ -2,6 +2,9 @@ package com.nflscores.app
 
 import android.content.Context
 import org.json.JSONObject
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 
 data class Prediction(
     val week: Int,
@@ -15,21 +18,81 @@ data class Prediction(
 
 /**
  * Predictions are NOT computed in this app. They are the analyst model's
- * LOCKED picks from the nfl-scores web app (its game_picks store), synced
- * into assets/predictions.json at build time by scripts/sync_predictions.py
- * from the web app's `getscores` action — one source of truth, two surfaces.
- * The week is read from the synced file, never hardcoded.
+ * LOCKED picks from the nfl-scores web app (its game_picks store) — one
+ * source of truth, two surfaces.
+ *
+ * Since v1.2.2 the picks arrive as a RUNTIME FEED, not a build-time sync:
+ * data/predictions.json in this repo (regenerated weekly from the web app's
+ * `getscores` action by scripts/sync_predictions.py) is fetched from GitHub
+ * at runtime. [load] is network-first:
+ *   1. fetch the feed (short timeout) and cache it to internal storage;
+ *   2. on any fetch failure, use the last-good cached feed;
+ *   3. on first run with no cache, fall back to the bundled
+ *      assets/predictions.json snapshot (refreshed whenever a release is
+ *      built anyway).
+ * The week is read from whichever file supplied the picks, never hardcoded.
+ * [load] does network I/O — call it from a background thread only (every
+ * current call site does).
  */
 object Predictions {
 
-    /** Week of the currently bundled predictions; set by [load]. 0 = not loaded. */
+    private const val FEED_URL =
+        "https://raw.githubusercontent.com/jeremywomble-droid/nfl-scores-app/main/data/predictions.json"
+    private const val CACHE_FILE = "predictions-feed-cache.json"
+    private const val FETCH_TIMEOUT_MS = 6000
+
+    /** Week of the currently loaded predictions; set by [load]. 0 = not loaded. */
+    @Volatile
     var week: Int = 0
         private set
 
     fun load(context: Context): List<Prediction> {
+        // 1) Network-first: fetch the live feed and cache it as last-good.
+        val fetched = try {
+            fetchFeed()
+        } catch (e: Exception) {
+            null
+        }
+        if (fetched != null) {
+            val parsed = parse(fetched)
+            if (parsed != null) {
+                try {
+                    File(context.filesDir, CACHE_FILE).writeText(fetched)
+                } catch (e: Exception) {
+                    // Cache write is best-effort; the parsed picks still count.
+                }
+                return parsed
+            }
+        }
+        // 2) Last-good cached feed from a previous successful fetch.
+        try {
+            val cached = File(context.filesDir, CACHE_FILE).readText()
+            parse(cached)?.let { return it }
+        } catch (e: Exception) {
+            // No cache yet — fall through to the bundled snapshot.
+        }
+        // 3) Bundled snapshot (offline / first-run fallback).
         val text = context.assets.open("predictions.json").bufferedReader().use { it.readText() }
+        return parse(text) ?: emptyList()
+    }
+
+    private fun fetchFeed(): String {
+        val conn = URL(FEED_URL).openConnection() as HttpURLConnection
+        conn.connectTimeout = FETCH_TIMEOUT_MS
+        conn.readTimeout = FETCH_TIMEOUT_MS
+        conn.useCaches = false
+        conn.setRequestProperty("Cache-Control", "no-cache")
+        conn.setRequestProperty("User-Agent", "NFLScores-Android")
+        if (conn.responseCode != HttpURLConnection.HTTP_OK) {
+            throw IllegalStateException("predictions feed HTTP ${conn.responseCode}")
+        }
+        return conn.inputStream.bufferedReader().use { it.readText() }
+    }
+
+    /** Parse one predictions file; sets [week]. Null if it carries no picks. */
+    private fun parse(text: String): List<Prediction>? {
         val root = JSONObject(text)
-        val arr = root.optJSONArray("predictions") ?: return emptyList()
+        val arr = root.optJSONArray("predictions") ?: return null
         val out = mutableListOf<Prediction>()
         for (i in 0 until arr.length()) {
             val o = arr.optJSONObject(i) ?: continue
@@ -45,6 +108,7 @@ object Predictions {
                 )
             )
         }
+        if (out.isEmpty()) return null
         week = root.optInt("week", out.firstOrNull()?.week ?: 0)
         return out
     }
