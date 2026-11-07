@@ -20,14 +20,14 @@ class GamesFactory(private val context: Context) : RemoteViewsService.RemoteView
     override fun onDataSetChanged() {
         // Runs on a background thread — network fetch is allowed here.
         try {
-            games = EspnApi.fetchWeek(Predictions.WEEK)
-        } catch (e: Exception) {
-            games = emptyList()
-        }
-        try {
             preds = Predictions.load(context)
         } catch (e: Exception) {
             preds = emptyList()
+        }
+        try {
+            games = if (Predictions.week > 0) EspnApi.fetchWeek(Predictions.week) else emptyList()
+        } catch (e: Exception) {
+            games = emptyList()
         }
         games = games.sortedWith(
             compareBy(

@@ -21,19 +21,41 @@ data class Game(
 )
 
 object EspnApi {
-    private const val BASE = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
+    // ESPN serves the same scoreboard from two hosts. If the phone's DNS
+    // cannot resolve the primary host (seen on Jeremy's Pixel: "Unable to
+    // resolve host site.api.espn.com"), fall back to the mirror host, and
+    // retry each host once to ride out transient DNS failures.
+    private val BASES = listOf(
+        "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard",
+        "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
+    )
 
-    fun fetchWeek(week: Int): List<Game> = parse(fetchJson("$BASE?week=$week&seasontype=2"))
+    fun fetchWeek(week: Int): List<Game> = parse(fetchJson { base -> "$base?week=$week&seasontype=2" })
 
-    fun fetchCurrent(): List<Game> = parse(fetchJson(BASE))
+    fun fetchCurrent(): List<Game> = parse(fetchJson { base -> base })
 
     fun currentWeekNumber(): Int {
-        val text = fetchJson(BASE)
+        val text = fetchJson { base -> base }
         val root = JSONObject(text)
         return root.optJSONObject("week")?.optInt("number", 0) ?: 0
     }
 
-    private fun fetchJson(url: String): String {
+    private fun fetchJson(mkUrl: (String) -> String): String {
+        var lastError: Exception? = null
+        for (base in BASES) {
+            repeat(2) { attempt ->
+                try {
+                    return fetchOnce(mkUrl(base))
+                } catch (e: Exception) {
+                    lastError = e
+                    if (attempt == 0) Thread.sleep(800)
+                }
+            }
+        }
+        throw lastError ?: IllegalStateException("fetch failed")
+    }
+
+    private fun fetchOnce(url: String): String {
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = 15000
         conn.readTimeout = 15000

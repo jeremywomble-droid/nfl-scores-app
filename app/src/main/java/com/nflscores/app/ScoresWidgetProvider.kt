@@ -11,8 +11,10 @@ import android.widget.RemoteViews
 import kotlin.concurrent.thread
 
 /**
- * Semi-transparent, scrollable home-screen widget: every Week 7 game with the
- * actual score on top and Muse's locked prediction underneath.
+ * Semi-transparent, scrollable home-screen widget: every game of the synced
+ * predictions week with the actual score on top and Muse's locked prediction
+ * underneath. The picks (and their week) come from the nfl-scores web app,
+ * synced into assets/predictions.json by scripts/sync_predictions.py.
  *
  * Refresh is game-aware (the system widget timer is OFF, updatePeriodMillis=0):
  *  - any game live        -> wake again in ~5 minutes
@@ -42,8 +44,8 @@ class ScoresWidgetProvider : AppWidgetProvider() {
             var games: List<Game> = emptyList()
             var stats = "Could not load — tap to open the app"
             try {
-                games = EspnApi.fetchWeek(Predictions.WEEK)
                 val preds = Predictions.load(context)
+                if (Predictions.week > 0) games = EspnApi.fetchWeek(Predictions.week)
                 stats = Predictions.statsLine(preds, games)
             } catch (e: Exception) {
                 // keep the fallback stats text
@@ -62,7 +64,8 @@ class ScoresWidgetProvider : AppWidgetProvider() {
 
     private fun buildViews(context: Context, stats: String): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_layout)
-        views.setTextViewText(R.id.widgetTitle, "🏈 NFL — WEEK 7")
+        val title = if (Predictions.week > 0) "🏈 NFL — WEEK ${Predictions.week}" else "🏈 NFL SCORES"
+        views.setTextViewText(R.id.widgetTitle, title)
         views.setTextViewText(R.id.widgetStats, stats)
         val adapterIntent = Intent(context, WidgetGamesService::class.java)
         views.setRemoteAdapter(R.id.widgetList, adapterIntent)

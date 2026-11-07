@@ -13,8 +13,18 @@ data class Prediction(
     val confidence: Int
 )
 
+/**
+ * Predictions are NOT computed in this app. They are the analyst model's
+ * LOCKED picks from the nfl-scores web app (its game_picks store), synced
+ * into assets/predictions.json at build time by scripts/sync_predictions.py
+ * from the web app's `getscores` action — one source of truth, two surfaces.
+ * The week is read from the synced file, never hardcoded.
+ */
 object Predictions {
-    const val WEEK = 7
+
+    /** Week of the currently bundled predictions; set by [load]. 0 = not loaded. */
+    var week: Int = 0
+        private set
 
     fun load(context: Context): List<Prediction> {
         val text = context.assets.open("predictions.json").bufferedReader().use { it.readText() }
@@ -25,7 +35,7 @@ object Predictions {
             val o = arr.optJSONObject(i) ?: continue
             out.add(
                 Prediction(
-                    week = o.optInt("week", WEEK),
+                    week = o.optInt("week", 0),
                     away = o.optString("away"),
                     home = o.optString("home"),
                     predAway = o.optInt("predAway"),
@@ -35,6 +45,7 @@ object Predictions {
                 )
             )
         }
+        week = root.optInt("week", out.firstOrNull()?.week ?: 0)
         return out
     }
 
@@ -65,7 +76,7 @@ object Predictions {
         val (graded, winners, exact) = grade(preds, games)
         val avgConf = if (preds.isEmpty()) 0 else preds.sumOf { it.confidence } / preds.size
         return if (graded == 0) {
-            "Picks locked for Week $WEEK · avg confidence $avgConf% · no finals yet"
+            "Picks locked for Week $week · avg confidence $avgConf% · no finals yet"
         } else {
             "Winner picks: $winners/$graded correct · Exact scores: $exact · avg confidence $avgConf%"
         }

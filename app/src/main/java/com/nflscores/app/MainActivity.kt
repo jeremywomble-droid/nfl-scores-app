@@ -50,28 +50,29 @@ class MainActivity : Activity() {
     private fun loadData() {
         updatedText.text = "Updating…"
         thread {
-            var week7: List<Game> = emptyList()
-            var current: List<Game> = emptyList()
-            var currentWeek = 0
-            var error: String? = null
-            try {
-                week7 = EspnApi.fetchWeek(Predictions.WEEK)
-                current = EspnApi.fetchCurrent()
-                currentWeek = EspnApi.currentWeekNumber()
-            } catch (e: Exception) {
-                error = e.message ?: "network error"
-            }
             val preds = try {
                 Predictions.load(this)
             } catch (e: Exception) {
                 emptyList()
             }
-            runOnUiThread { render(week7, current, currentWeek, preds, error) }
+            val predWeek = Predictions.week
+            var predGames: List<Game> = emptyList()
+            var current: List<Game> = emptyList()
+            var currentWeek = 0
+            var error: String? = null
+            try {
+                if (predWeek > 0) predGames = EspnApi.fetchWeek(predWeek)
+                current = EspnApi.fetchCurrent()
+                currentWeek = EspnApi.currentWeekNumber()
+            } catch (e: Exception) {
+                error = e.message ?: "network error"
+            }
+            runOnUiThread { render(predGames, current, currentWeek, preds, error) }
         }
     }
 
     private fun render(
-        week7: List<Game>,
+        predGames: List<Game>,
         current: List<Game>,
         currentWeek: Int,
         preds: List<Prediction>,
@@ -85,20 +86,21 @@ class MainActivity : Activity() {
             "Updated ${timeFmt.format(Date())} · auto-refreshes every minute"
         }
 
-        // ---- Predictions section (Week 7, locked) ----
-        container.addView(sectionTitle("🔮 CLAUDE'S WEEK 7 PREDICTIONS — LOCKED"))
-        if (week7.isEmpty()) {
-            container.addView(bodyText("Week 7 games not available yet."))
+        // ---- Predictions section (week comes from the synced web-app picks) ----
+        val predWeek = Predictions.week
+        container.addView(sectionTitle("🔮 CLAUDE'S WEEK $predWeek PREDICTIONS — LOCKED"))
+        if (predGames.isEmpty()) {
+            container.addView(bodyText("Week $predWeek games not available yet."))
         } else {
-            container.addView(statsText(Predictions.statsLine(preds, week7)))
-            val sorted = week7.sortedWith(compareBy({ stateOrder(it.state) }, { it.dateMillis }))
+            container.addView(statsText(Predictions.statsLine(preds, predGames)))
+            val sorted = predGames.sortedWith(compareBy({ stateOrder(it.state) }, { it.dateMillis }))
             for (g in sorted) {
                 container.addView(gameCard(g, Predictions.find(preds, g), showPrediction = true))
             }
         }
 
         // ---- Current week section ----
-        if (currentWeek != Predictions.WEEK && current.isNotEmpty()) {
+        if (currentWeek != predWeek && currentWeek > 0 && current.isNotEmpty()) {
             container.addView(sectionTitle("📅 THIS WEEK (WEEK $currentWeek)"))
             val sorted = current.sortedWith(compareBy({ stateOrder(it.state) }, { it.dateMillis }))
             for (g in sorted) {

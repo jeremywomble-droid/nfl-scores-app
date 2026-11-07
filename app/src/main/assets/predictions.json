@@ -1,130 +1,143 @@
 {
+ "week": 9,
+ "seasonYear": 2026,
+ "source": "nfl-scores web app (getscores action) \u2014 analyst model locked picks; synced build-time by scripts/sync_predictions.py",
+ "syncedAt": "2026-11-07T01:29:33Z",
  "predictions": [
   {
-   "week": 7,
-   "away": "NE",
-   "home": "CHI",
-   "predAway": 21,
-   "predHome": 23,
-   "pick": "CHI",
-   "confidence": 59
-  },
-  {
-   "week": 7,
-   "away": "PIT",
-   "home": "NO",
-   "predAway": 26,
-   "predHome": 24,
-   "pick": "PIT",
-   "confidence": 59
-  },
-  {
-   "week": 7,
-   "away": "SF",
-   "home": "ATL",
-   "predAway": 28,
-   "predHome": 23,
-   "pick": "SF",
-   "confidence": 71
-  },
-  {
-   "week": 7,
-   "away": "CLE",
-   "home": "TEN",
-   "predAway": 20,
-   "predHome": 19,
-   "pick": "CLE",
-   "confidence": 55
-  },
-  {
-   "week": 7,
-   "away": "IND",
-   "home": "MIN",
-   "predAway": 19,
-   "predHome": 26,
-   "pick": "MIN",
-   "confidence": 78
-  },
-  {
-   "week": 7,
-   "away": "MIA",
-   "home": "NYJ",
-   "predAway": 17,
-   "predHome": 24,
-   "pick": "NYJ",
-   "confidence": 78
-  },
-  {
-   "week": 7,
-   "away": "TB",
-   "home": "CAR",
-   "predAway": 24,
-   "predHome": 28,
-   "pick": "CAR",
-   "confidence": 67
-  },
-  {
-   "week": 7,
-   "away": "CIN",
+   "week": 9,
+   "away": "JAX",
    "home": "BAL",
    "predAway": 25,
-   "predHome": 27,
-   "pick": "BAL",
-   "confidence": 59
+   "predHome": 16,
+   "pick": "JAX",
+   "confidence": 79
   },
   {
-   "week": 7,
-   "away": "NYG",
-   "home": "HOU",
-   "predAway": 22,
-   "predHome": 23,
-   "pick": "HOU",
-   "confidence": 55
+   "week": 9,
+   "away": "CIN",
+   "home": "ATL",
+   "predAway": 28,
+   "predHome": 25,
+   "pick": "CIN",
+   "confidence": 83
   },
   {
-   "week": 7,
-   "away": "DEN",
-   "home": "ARI",
-   "predAway": 26,
-   "predHome": 23,
-   "pick": "DEN",
-   "confidence": 63
-  },
-  {
-   "week": 7,
-   "away": "GB",
-   "home": "DET",
-   "predAway": 25,
-   "predHome": 29,
-   "pick": "DET",
-   "confidence": 67
-  },
-  {
-   "week": 7,
-   "away": "LAR",
-   "home": "LV",
-   "predAway": 25,
-   "predHome": 27,
-   "pick": "LV",
-   "confidence": 59
-  },
-  {
-   "week": 7,
-   "away": "KC",
-   "home": "SEA",
-   "predAway": 25,
-   "predHome": 26,
-   "pick": "SEA",
-   "confidence": 55
-  },
-  {
-   "week": 7,
+   "week": 9,
    "away": "DAL",
-   "home": "PHI",
-   "predAway": 25,
+   "home": "IND",
+   "predAway": 28,
    "predHome": 24,
    "pick": "DAL",
-   "confidence": 55
+   "confidence": 64
+  },
+  {
+   "week": 9,
+   "away": "NYJ",
+   "home": "KC",
+   "predAway": 20,
+   "predHome": 29,
+   "pick": "KC",
+   "confidence": 85
+  },
+  {
+   "week": 9,
+   "away": "DET",
+   "home": "MIA",
+   "predAway": 28,
+   "predHome": 22,
+   "pick": "DET",
+   "confidence": 81
+  },
+  {
+   "week": 9,
+   "away": "CLE",
+   "home": "NO",
+   "predAway": 20,
+   "predHome": 23,
+   "pick": "NO",
+   "confidence": 61
+  },
+  {
+   "week": 9,
+   "away": "NYG",
+   "home": "PHI",
+   "predAway": 21,
+   "predHome": 18,
+   "pick": "NYG",
+   "confidence": 69
+  },
+  {
+   "week": 9,
+   "away": "LAR",
+   "home": "WSH",
+   "predAway": 26,
+   "predHome": 22,
+   "pick": "LAR",
+   "confidence": 78
+  },
+  {
+   "week": 9,
+   "away": "DEN",
+   "home": "CAR",
+   "predAway": 24,
+   "predHome": 21,
+   "pick": "DEN",
+   "confidence": 65
+  },
+  {
+   "week": 9,
+   "away": "HOU",
+   "home": "LAC",
+   "predAway": 23,
+   "predHome": 17,
+   "pick": "HOU",
+   "confidence": 72
+  },
+  {
+   "week": 9,
+   "away": "GB",
+   "home": "NE",
+   "predAway": 21,
+   "predHome": 24,
+   "pick": "NE",
+   "confidence": 60
+  },
+  {
+   "week": 9,
+   "away": "LV",
+   "home": "SF",
+   "predAway": 21,
+   "predHome": 31,
+   "pick": "SF",
+   "confidence": 86
+  },
+  {
+   "week": 9,
+   "away": "ARI",
+   "home": "SEA",
+   "predAway": 16,
+   "predHome": 24,
+   "pick": "SEA",
+   "confidence": 64
+  },
+  {
+   "week": 9,
+   "away": "TB",
+   "home": "CHI",
+   "predAway": 21,
+   "predHome": 27,
+   "pick": "CHI",
+   "confidence": 66
+  },
+  {
+   "week": 9,
+   "away": "BUF",
+   "home": "MIN",
+   "predAway": 23,
+   "predHome": 20,
+   "pick": "BUF",
+   "confidence": 64
   }
  ]
 }
